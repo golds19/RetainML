@@ -1,0 +1,12 @@
+pandas
+numpy
+matplotlib
+scikit-learn
+xgboost
+lightgbm
+mlflow
+fastapi
+uvicorn
+pydantic
+pytest
+requests
