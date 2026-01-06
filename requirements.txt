@@ -14,3 +14,4 @@ kagglehub
 ipykernel
 ctgan
 seaborn
+imblearn
