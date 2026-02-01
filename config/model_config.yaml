@@ -1,0 +1,63 @@
+# Model training and evaluation configuration
+models:
+  logistic_regression:
+    enabled: true
+    display_name: "Logistic Regression"
+    params:
+      max_iter: 1000
+      random_state: 42
+      class_weight: "balanced"
+      solver: "lbfgs"
+
+  random_forest:
+    enabled: true
+    display_name: "Random Forest"
+    params:
+      n_estimators: 100
+      random_state: 42
+      class_weight: "balanced"
+      max_depth: 10
+      min_samples_split: 2
+      min_samples_leaf: 1
+      n_jobs: -1  # Use all available cores
+
+  gradient_boosting:
+    enabled: true
+    display_name: "Gradient Boosting"
+    params:
+      n_estimators: 100
+      random_state: 42
+      max_depth: 5
+      learning_rate: 0.1
+      subsample: 1.0
+      min_samples_split: 2
+      min_samples_leaf: 1
+
+# Evaluation configuration
+evaluation:
+  # Metrics to calculate
+  metrics:
+    - accuracy
+    - precision
+    - recall
+    - f1_score
+    - roc_auc
+
+  # Primary metric for model selection
+  primary_metric: "f1_score"
+
+  # Cross-validation settings (currently disabled for baseline)
+  cross_validation:
+    enabled: false
+    cv_folds: 5
+    stratified: true
+
+  # Visualization settings
+  visualizations:
+    save_path: "results/"
+    create_model_comparison: true
+    create_confusion_matrix: true
+    create_roc_curve: true
+    create_feature_importance: true
+    feature_importance_top_n: 20
+    dpi: 300  # Image resolution

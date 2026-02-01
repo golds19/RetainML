@@ -1,0 +1,30 @@
+# Data loading and preprocessing configuration
+data:
+  raw_data_path: "data/raw/Telco-Customer-Churn.csv"
+  processed_data_path: "data/processed/"
+
+preprocessing:
+  target_column: "Churn"
+  id_column: "customerID"
+
+  # Missing value handling
+  missing_value_strategy:
+    TotalCharges:
+      method: "fill_with_column"
+      fill_column: "MonthlyCharges"
+
+  # Columns to convert to numeric
+  numeric_conversions:
+    - TotalCharges
+
+  # Train-test split
+  test_size: 0.2
+  random_state: 42
+  stratify: true
+
+  # Feature scaling
+  scaler_type: "StandardScaler"  # Options: StandardScaler, MinMaxScaler
+
+  # Class imbalance handling
+  apply_smote: true
+  smote_random_state: 42

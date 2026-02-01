@@ -1,0 +1,72 @@
+# Feature engineering configuration
+feature_engineering:
+  # Tenure grouping
+  tenure_groups:
+    enabled: true
+    bins: [0, 12, 24, 48, 72]
+    labels: ["0-1 year", "1-2 years", "2-4 years", "4+ years"]
+
+  # Calculated/derived features
+  derived_features:
+    charge_ratio:
+      enabled: true
+      description: "MonthlyCharges / (TotalCharges + 1)"
+
+    avg_monthly_charge:
+      enabled: true
+      description: "TotalCharges / (tenure + 1)"
+
+    high_monthly_charge:
+      enabled: true
+      threshold_type: "median"  # Options: median, mean
+      description: "Binary indicator if MonthlyCharges > threshold"
+
+  # Service counting and indicators
+  service_features:
+    enabled: true
+    service_columns:
+      - PhoneService
+      - MultipleLines
+      - InternetService
+      - OnlineSecurity
+      - OnlineBackup
+      - DeviceProtection
+      - TechSupport
+      - StreamingTV
+      - StreamingMovies
+    exclude_values:
+      - "No"
+      - "No internet service"
+      - "No phone service"
+
+  # Binary indicator features
+  indicator_features:
+    has_internet:
+      enabled: true
+      description: "Has internet service (InternetService != 'No')"
+
+    has_phone:
+      enabled: true
+      description: "Has phone service (PhoneService == 'Yes')"
+
+    has_family:
+      enabled: true
+      description: "Has partner or dependents"
+
+    contract_risk:
+      enabled: true
+      description: "Month-to-month contract (higher churn risk)"
+
+    payment_risk:
+      enabled: true
+      description: "Electronic check payment (higher churn risk)"
+
+    senior_alone:
+      enabled: true
+      description: "Senior citizen without family (vulnerable segment)"
+
+  # Encoding strategy
+  encoding:
+    binary_encode_yes_no: true
+    one_hot_encode_categorical: true
+    drop_first: true  # Drop first category to avoid multicollinearity

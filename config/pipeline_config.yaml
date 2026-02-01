@@ -1,0 +1,30 @@
+# Pipeline orchestration configuration
+pipeline:
+  name: "churn_prediction_baseline"
+  version: "1.0.0"
+  description: "Baseline models for customer churn prediction"
+
+  # Execution settings
+  execution:
+    verbose: true
+    save_intermediate_results: false
+
+  # Paths
+  paths:
+    data_dir: "data/"
+    results_dir: "results/"
+    models_dir: "models/"
+    logs_dir: "logs/"
+
+  # Logging configuration
+  logging:
+    level: "INFO"  # Options: DEBUG, INFO, WARNING, ERROR, CRITICAL
+    format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    log_to_file: true
+    log_file: "logs/training.log"
+
+  # MLflow integration (future feature)
+  mlflow:
+    enabled: false
+    tracking_uri: "http://localhost:5000"
+    experiment_name: "churn_prediction"

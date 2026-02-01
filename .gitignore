@@ -190,6 +190,9 @@ great_expectations/uncommitted/
 outputs/
 results/
 
+# Design 
+system_design/
+
 # Temporary files
 *.tmp
 *.temp
