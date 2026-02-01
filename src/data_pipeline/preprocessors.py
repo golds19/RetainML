@@ -81,7 +81,7 @@ class DataPreprocessor:
 
             if strategy['method'] == 'fill_with_column':
                 fill_col = strategy['fill_column']
-                df[col].fillna(df[fill_col], inplace=True)
+                df[col] = df[col].fillna(df[fill_col])
                 logger.info(f"Filled {col} missing values with {fill_col}")
 
         return df
