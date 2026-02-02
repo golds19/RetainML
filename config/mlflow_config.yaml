@@ -1,0 +1,40 @@
+# MLflow experiment tracking configuration
+mlflow:
+  # Master switch - pipeline works identically when false
+  enabled: true
+
+  # Tracking server
+  tracking_uri: "sqlite:///mlflow.db"  # Local SQLite database; change to "http://localhost:5000" for server
+  registry_uri: null  # null = same as tracking_uri
+
+  # Experiment settings
+  experiment_name: "churn_prediction"
+  run_name_prefix: "pipeline"  # Runs named: pipeline_YYYY-MM-DD_HH-MM-SS
+
+  # Artifact settings
+  log_artifacts:
+    plots: true
+    results_csv: true
+    feature_importance: true
+    config_snapshot: true
+
+  # Model registry
+  model_registry:
+    enabled: true
+    register_best_model: true
+    model_name: "churn_predictor"
+    tags:
+      project: "retainml"
+      task: "binary_classification"
+
+  # Tags applied to every run
+  default_tags:
+    project: "retainml"
+    pipeline_version: "1.0.0"
+    dataset: "telco_customer_churn"
+
+  # Connection resilience
+  connection:
+    timeout_seconds: 10
+    max_retries: 2
+    fail_silently: true  # If true, pipeline continues even if MLflow is unreachable

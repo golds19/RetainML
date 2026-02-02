@@ -23,8 +23,4 @@ pipeline:
     log_to_file: true
     log_file: "logs/training.log"
 
-  # MLflow integration (future feature)
-  mlflow:
-    enabled: false
-    tracking_uri: "http://localhost:5000"
-    experiment_name: "churn_prediction"
+  # MLflow integration - see config/mlflow_config.yaml for settings

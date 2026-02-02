@@ -164,6 +164,7 @@ data/synthetic/*
 # ML artifacts
 mlruns/
 mlartifacts/
+mlflow.db
 *.pkl
 *.pickle
 *.joblib

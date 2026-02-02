@@ -64,7 +64,8 @@ class ConfigLoader:
             'data_config.yaml',
             'feature_config.yaml',
             'model_config.yaml',
-            'pipeline_config.yaml'
+            'pipeline_config.yaml',
+            'mlflow_config.yaml',
         ]
 
         merged_config = {}
