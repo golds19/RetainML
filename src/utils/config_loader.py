@@ -66,6 +66,7 @@ class ConfigLoader:
             'model_config.yaml',
             'pipeline_config.yaml',
             'mlflow_config.yaml',
+            'validation_config.yaml',
         ]
 
         merged_config = {}

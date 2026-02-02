@@ -18,6 +18,7 @@ from data_pipeline.loaders import DataLoader
 from data_pipeline.preprocessors import DataPreprocessor, TargetEncoder
 from data_pipeline.feature_engineer import ChurnFeatureEngineer, FeatureEncoder
 from data_pipeline.splitters import DataSplitter, FeatureScaler, ImbalanceHandler
+from data_pipeline.validators import DataValidator
 
 # Training imports
 from training.models import ModelFactory
@@ -68,6 +69,13 @@ def main():
         data_loader = DataLoader(config)
         df = data_loader.load_csv()
 
+        # 1b. Validate raw data
+        validator = DataValidator(config)
+        raw_result = validator.validate_raw_data(df)
+        if not raw_result.passed:
+            logger.error("Raw data validation failed. Stopping pipeline.")
+            return
+
         # 2. Preprocess Data
         preprocessor = DataPreprocessor(config)
         df = preprocessor.preprocess(df)
@@ -83,6 +91,12 @@ def main():
         # 5. Encode Target
         target_encoder = TargetEncoder(config)
         df = target_encoder.encode_target(df)
+
+        # 5b. Validate processed data
+        proc_result = validator.validate_processed_data(df)
+        if not proc_result.passed:
+            logger.error("Processed data validation failed. Stopping pipeline.")
+            return
 
         # 6. Split Data
         splitter = DataSplitter(config)
