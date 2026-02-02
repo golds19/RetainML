@@ -10,6 +10,8 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root / 'src'))
 
+import json
+import joblib
 import pandas as pd
 from typing import Dict, Any
 
@@ -260,6 +262,25 @@ def main():
         best_model = trained_models[best_model_name]
         best_metrics = evaluator.results[best_model_name]['metrics']
         tracker.register_best_model(best_model, best_model_name, best_metrics)
+
+        # 16. Save serving artifacts
+        models_dir = Path('models')
+        models_dir.mkdir(parents=True, exist_ok=True)
+
+        joblib.dump(best_model, models_dir / 'model.pkl')
+        joblib.dump(scaler.get_scaler(), models_dir / 'scaler.pkl')
+
+        with open(models_dir / 'feature_columns.json', 'w') as f:
+            json.dump(X_train.columns.tolist(), f)
+
+        with open(models_dir / 'metadata.json', 'w') as f:
+            json.dump({
+                'best_model': best_model_name,
+                'f1_score': float(results_df.iloc[0]['f1_score']),
+                'roc_auc': float(results_df.iloc[0]['roc_auc']),
+            }, f, indent=2)
+
+        logger.info(f"Serving artifacts saved to {models_dir}/")
 
         # Summary
         logger.info("\n" + "="*80)
