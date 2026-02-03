@@ -13,6 +13,7 @@ import logging
 from data_pipeline.preprocessors import DataPreprocessor
 from data_pipeline.feature_engineer import ChurnFeatureEngineer, FeatureEncoder
 from utils.config_loader import ConfigLoader
+from serving.explainer import ChurnExplainer
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +36,7 @@ class ChurnPredictor:
         config_loader = ConfigLoader(config_dir=config_dir)
         self.config = config_loader.load_all_configs()
 
+        self.explainer = ChurnExplainer(self.model, self.feature_columns)
         logger.info(f"Loaded model: {self.metadata['best_model']}")
 
     def predict(self, customer_data: dict) -> dict:
@@ -96,9 +98,14 @@ class ChurnPredictor:
         else:
             risk_level = "low"
 
+        # Explain prediction
+        explanation = self.explainer.explain(df_scaled, customer_data)
+
         return {
             "prediction": prediction,
             "churn_probability": round(proba, 4),
             "risk_level": risk_level,
             "model": self.metadata["best_model"],
+            "concerns": explanation["concerns"],
+            "retention_plan": explanation["retention_plan"],
         }

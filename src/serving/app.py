@@ -12,7 +12,7 @@ sys.path.insert(0, str(project_root / "src"))
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from typing import Optional
+from typing import List, Optional
 
 from serving.predict import ChurnPredictor
 
@@ -54,11 +54,25 @@ class CustomerInput(BaseModel):
     gender: str = "Male"
 
 
+class Concern(BaseModel):
+    feature: str
+    description: str
+    impact_score: float
+
+
+class RetentionAction(BaseModel):
+    action: str
+    reason: str
+    priority: str
+
+
 class PredictionOutput(BaseModel):
     prediction: int
     churn_probability: float
     risk_level: str
     model: str
+    concerns: List[Concern] = []
+    retention_plan: List[RetentionAction] = []
 
 
 @app.get("/health")

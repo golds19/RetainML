@@ -91,9 +91,22 @@ if st.button("Predict Churn", type="primary"):
         else:
             st.success(f"Risk Level: LOW")
 
-        col_a, col_b, col_c = st.columns(3)
+        col_a, col_b = st.columns(2)
         col_a.metric("Churn Probability", f"{result['churn_probability']:.1%}")
         col_b.metric("Prediction", "Will Churn" if result["prediction"] == 1 else "Will Stay")
-        col_c.metric("Model", result["model"])
+
+        # Key Risk Factors
+        if result.get("concerns"):
+            st.header("Key Risk Factors")
+            for c in result["concerns"]:
+                st.markdown(f"- **{c['feature']}** (impact: {c['impact_score']:.3f}) — {c['description']}")
+
+        # Retention Plan
+        if result.get("retention_plan"):
+            st.header("Retention Plan")
+            for a in result["retention_plan"]:
+                icon = {"high": "🔴", "medium": "🟡", "low": "🟢"}.get(a["priority"], "⚪")
+                st.markdown(f"{icon} **[{a['priority'].upper()}]** {a['action']}")
+                st.caption(a["reason"])
     else:
         st.error(f"API error: {resp.text}")
