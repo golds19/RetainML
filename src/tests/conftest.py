@@ -2,11 +2,17 @@
 Shared test fixtures for RetainML unit tests.
 """
 
+import sys
+from pathlib import Path
+from unittest.mock import MagicMock
+
 import pytest
 import pandas as pd
 import numpy as np
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
+
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 
 @pytest.fixture
@@ -191,3 +197,107 @@ def fitted_lr_model(sample_X_y):
     model = LogisticRegression(max_iter=1000, random_state=42)
     model.fit(X_train, y_train)
     return model
+
+
+FEATURE_COLUMNS = [
+    "SeniorCitizen", "Partner", "Dependents", "tenure", "PhoneService",
+    "PaperlessBilling", "MonthlyCharges", "TotalCharges", "charge_ratio",
+    "avg_monthly_charge", "high_monthly_charge", "services_count",
+    "has_internet", "has_phone", "has_family", "contract_risk", "payment_risk",
+    "senior_alone", "gender_Male", "MultipleLines_No phone service",
+    "MultipleLines_Yes", "InternetService_Fiber optic", "InternetService_No",
+    "OnlineSecurity_No internet service", "OnlineSecurity_Yes",
+    "OnlineBackup_No internet service", "OnlineBackup_Yes",
+    "DeviceProtection_No internet service", "DeviceProtection_Yes",
+    "TechSupport_No internet service", "TechSupport_Yes",
+    "StreamingTV_No internet service", "StreamingTV_Yes",
+    "StreamingMovies_No internet service", "StreamingMovies_Yes",
+    "Contract_One year", "Contract_Two year",
+    "PaymentMethod_Credit card (automatic)", "PaymentMethod_Electronic check",
+    "PaymentMethod_Mailed check", "tenure_group_1-2 years",
+    "tenure_group_2-4 years", "tenure_group_4+ years",
+]
+
+
+@pytest.fixture
+def feature_columns():
+    """The 43 feature column names after encoding."""
+    return FEATURE_COLUMNS.copy()
+
+
+@pytest.fixture
+def validation_config():
+    """Config dict with validation rules."""
+    return {
+        "validation": {
+            "min_rows": 10,
+            "max_missing_pct": 5.0,
+            "required_columns": [
+                "customerID", "gender", "SeniorCitizen", "Partner",
+                "Dependents", "tenure", "PhoneService", "MultipleLines",
+                "InternetService", "OnlineSecurity", "OnlineBackup",
+                "DeviceProtection", "TechSupport", "StreamingTV",
+                "StreamingMovies", "Contract", "PaperlessBilling",
+                "PaymentMethod", "MonthlyCharges", "TotalCharges", "Churn",
+            ],
+            "id_column": "customerID",
+            "target_column": "Churn",
+            "target_values": ["Yes", "No"],
+            "numeric_ranges": {
+                "tenure": {"min": 0, "max": 200},
+                "MonthlyCharges": {"min": 0, "max": 500},
+            },
+            "categorical_values": {
+                "Contract": ["Month-to-month", "One year", "Two year"],
+                "gender": ["Male", "Female"],
+            },
+        }
+    }
+
+
+@pytest.fixture
+def mock_rf_model(feature_columns):
+    """Mock Random Forest model with controlled feature_importances_."""
+    np.random.seed(42)
+    n = len(feature_columns)
+    importances = np.random.dirichlet(np.ones(n))  # sums to 1.0
+
+    model = MagicMock()
+    model.feature_importances_ = importances
+    model.predict.return_value = np.array([1])
+    model.predict_proba.return_value = np.array([[0.3, 0.7]])
+    return model
+
+
+@pytest.fixture
+def mock_scaler(feature_columns):
+    """Mock scaler that returns input unchanged."""
+    scaler = MagicMock()
+    scaler.transform.side_effect = lambda x: x
+    return scaler
+
+
+@pytest.fixture
+def sample_customer_data():
+    """Single customer raw input dict."""
+    return {
+        "SeniorCitizen": 0,
+        "Partner": "No",
+        "Dependents": "No",
+        "tenure": 6,
+        "PhoneService": "Yes",
+        "MultipleLines": "No",
+        "InternetService": "Fiber optic",
+        "OnlineSecurity": "No",
+        "OnlineBackup": "No",
+        "DeviceProtection": "No",
+        "TechSupport": "No",
+        "StreamingTV": "No",
+        "StreamingMovies": "No",
+        "Contract": "Month-to-month",
+        "PaperlessBilling": "Yes",
+        "PaymentMethod": "Electronic check",
+        "MonthlyCharges": 85.0,
+        "TotalCharges": "510.0",
+        "gender": "Male",
+    }
