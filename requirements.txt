@@ -14,6 +14,6 @@ kagglehub
 ipykernel
 ctgan
 seaborn
-imblearn-learn
+imbalanced-learn
 optuna
 streamlit
