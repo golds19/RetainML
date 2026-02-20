@@ -97,17 +97,22 @@ def prepare_data(config, logger):
     feature_engineer = ChurnFeatureEngineer(config)
     df = feature_engineer.create_all_features(df)
 
-    # 4. Feature encoding
-    feature_encoder = FeatureEncoder(config)
-    df = feature_encoder.encode_features(df)
-
-    # 5. Encode target
+    # 4. Encode target
     target_encoder = TargetEncoder(config)
     df = target_encoder.encode_target(df)
 
-    # 6. Split
+    # 5. Split (before encoding to prevent OHE leakage)
     splitter = DataSplitter(config)
     X_train, X_test, y_train, y_test = splitter.split_data(df)
+
+    # 5a. Fix high_monthly_charge threshold from train data only
+    charge_threshold = X_train['MonthlyCharges'].median()
+    X_train['high_monthly_charge'] = (X_train['MonthlyCharges'] > charge_threshold).astype(int)
+    X_test['high_monthly_charge'] = (X_test['MonthlyCharges'] > charge_threshold).astype(int)
+
+    # 6. Encode features (fit on train, transform test)
+    feature_encoder = FeatureEncoder(config)
+    X_train, X_test = feature_encoder.fit_transform(X_train), feature_encoder.transform(X_test)
 
     # 7. Scale
     scaler = FeatureScaler(config)

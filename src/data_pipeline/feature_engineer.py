@@ -168,6 +168,71 @@ class FeatureEncoder:
         self.config = config['feature_engineering']['encoding']
         self.id_column = config['preprocessing']['id_column']
         self.target_column = config['preprocessing']['target_column']
+        # Set by fit_transform(), used by transform()
+        self._binary_cols: List[str] = []
+        self._ohe_cols: List[str] = []
+        self._fitted_columns: List[str] = []
+
+    def fit_transform(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Fit encoder on training data and transform it.
+
+        Call this on X_train; then call transform() on X_test.
+
+        Args:
+            df: Training feature DataFrame (no target column)
+
+        Returns:
+            Encoded training DataFrame
+        """
+        df = df.copy()
+
+        if self.id_column in df.columns:
+            df = df.drop(self.id_column, axis=1)
+            logger.info("Dropped customerID")
+
+        categorical_cols = df.select_dtypes(include=['object', 'category']).columns.tolist()
+        if self.target_column in categorical_cols:
+            categorical_cols.remove(self.target_column)
+
+        self._binary_cols = []
+        if self.config.get('binary_encode_yes_no', True):
+            self._binary_cols = self._get_binary_columns(df, categorical_cols)
+            df = self._binary_encode(df, self._binary_cols)
+
+        self._ohe_cols = [col for col in categorical_cols if col not in self._binary_cols]
+        if self.config.get('one_hot_encode_categorical', True):
+            df = self._one_hot_encode(df, self._ohe_cols)
+
+        self._fitted_columns = df.columns.tolist()
+        logger.info(f"Feature encoder fitted. Final feature count: {len(self._fitted_columns)}")
+        return df
+
+    def transform(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Transform data using the fitted encoder.
+
+        Must call fit_transform() before calling this.
+
+        Args:
+            df: Feature DataFrame to transform (no target column)
+
+        Returns:
+            Encoded DataFrame aligned to training columns
+        """
+        df = df.copy()
+
+        if self.id_column in df.columns:
+            df = df.drop(self.id_column, axis=1)
+
+        df = self._binary_encode(df, self._binary_cols)
+
+        if self._ohe_cols:
+            df = self._one_hot_encode(df, self._ohe_cols)
+
+        # Align columns to training set (handles unseen categories gracefully)
+        df = df.reindex(columns=self._fitted_columns, fill_value=0)
+        return df
 
     def encode_features(self, df: pd.DataFrame) -> pd.DataFrame:
         """

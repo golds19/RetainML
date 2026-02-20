@@ -3,6 +3,8 @@ Visualization utilities for model results.
 Creates plots for model comparison, confusion matrices, and feature importance.
 """
 
+import matplotlib
+matplotlib.use('Agg')  # non-interactive backend — must be set before pyplot import
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt

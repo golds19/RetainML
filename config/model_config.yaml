@@ -33,6 +33,15 @@ models:
       min_samples_split: 2
       min_samples_leaf: 1
 
+# Risk thresholds for churn prediction (used by serving/predict.py)
+risk_thresholds:
+  high: 0.7
+  medium: 0.4
+
+# Explainer settings
+explainer:
+  top_n: 5
+
 # Evaluation configuration
 evaluation:
   # Metrics to calculate

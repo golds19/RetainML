@@ -3,6 +3,7 @@ Main training pipeline orchestration script.
 Replaces the monolithic analysis.py with a modular, configuration-driven approach.
 """
 
+import argparse
 import sys
 from pathlib import Path
 
@@ -26,6 +27,7 @@ from data_pipeline.validators import DataValidator
 from training.models import ModelFactory
 from training.trainers import ModelTrainer
 from training.evaluators import ModelEvaluator
+from training.hyperparameter_tuner import HyperparameterTuner
 
 # Utility imports
 from utils.config_loader import ConfigLoader
@@ -38,6 +40,14 @@ from monitoring.mlflow_tracker import MLflowTracker
 
 def main():
     """Main pipeline execution function."""
+
+    parser = argparse.ArgumentParser(description="RetainML training pipeline")
+    parser.add_argument(
+        "--tune",
+        action="store_true",
+        help="Run Optuna hyperparameter optimization before final training",
+    )
+    args = parser.parse_args()
 
     # Load configuration
     config_loader = ConfigLoader(config_dir='config')
@@ -59,6 +69,7 @@ def main():
     logger.info("Feature Engineering & Baseline Model Development")
     logger.info(f"Pipeline: {pipeline_config.get('name', 'Unknown')}")
     logger.info(f"Version: {pipeline_config.get('version', 'Unknown')}")
+    logger.info(f"HPO tuning: {'enabled' if args.tune else 'disabled'}")
     logger.info("="*80)
 
     # Initialize MLflow tracker
@@ -86,23 +97,33 @@ def main():
         feature_engineer = ChurnFeatureEngineer(config)
         df = feature_engineer.create_all_features(df)
 
-        # 4. Feature Encoding
-        feature_encoder = FeatureEncoder(config)
-        df = feature_encoder.encode_features(df)
-
-        # 5. Encode Target
+        # 4. Encode Target
         target_encoder = TargetEncoder(config)
         df = target_encoder.encode_target(df)
 
-        # 5b. Validate processed data
+        # 4b. Validate processed data (before split — works on mixed-type df)
         proc_result = validator.validate_processed_data(df)
         if not proc_result.passed:
             logger.error("Processed data validation failed. Stopping pipeline.")
             return
 
-        # 6. Split Data
+        # 5. Split Data — done BEFORE feature encoding to prevent OHE leakage
         splitter = DataSplitter(config)
+        target_col = config['preprocessing']['target_column']
         X_train, X_test, y_train, y_test = splitter.split_data(df)
+
+        # 5a. Fix high_monthly_charge: recompute threshold from training data only
+        #     The feature_engineer computed it on the full df above; we override it
+        #     here using only the train split so test data cannot influence the threshold.
+        charge_threshold = X_train['MonthlyCharges'].median()
+        X_train['high_monthly_charge'] = (X_train['MonthlyCharges'] > charge_threshold).astype(int)
+        X_test['high_monthly_charge'] = (X_test['MonthlyCharges'] > charge_threshold).astype(int)
+        logger.info(f"high_monthly_charge threshold (train median): {charge_threshold:.2f}")
+
+        # 6. Encode Features — fit on X_train only, then transform X_test
+        feature_encoder = FeatureEncoder(config)
+        X_train = feature_encoder.fit_transform(X_train)
+        X_test = feature_encoder.transform(X_test)
 
         # 7. Scale Features
         scaler = FeatureScaler(config)
@@ -129,12 +150,50 @@ def main():
             "data.smote_applied": config.get('preprocessing', {}).get('apply_smote'),
             "data.train_samples": X_train_balanced.shape[0],
             "data.test_samples": X_test_scaled.shape[0],
+            "pipeline.hpo_enabled": args.tune,
         })
 
-        # 9. Create Models
+        # 9. Hyperparameter Optimization (optional, --tune flag)
+        if args.tune:
+            logger.info("\n" + "="*80)
+            logger.info("HYPERPARAMETER OPTIMIZATION (Optuna)")
+            logger.info("="*80)
+
+            tuner = HyperparameterTuner(config)
+            search_spaces = config.get('search_spaces', {})
+
+            for model_key, model_cfg in config.get('models', {}).items():
+                if not model_cfg.get('enabled', True):
+                    continue
+                if model_key not in search_spaces:
+                    logger.info(f"No search space for {model_key}, skipping HPO")
+                    continue
+
+                display_name = model_cfg.get('display_name', model_key)
+                logger.info(f"\nTuning {display_name}...")
+
+                result = tuner.optimize(model_key, X_train_balanced, y_train_balanced)
+                best_params = result['best_params']
+
+                # Override config params with tuned values
+                config['models'][model_key]['params'].update(best_params)
+
+                logger.info(f"Best params for {display_name}: {best_params}")
+                logger.info(f"Best CV score: {result['best_score']:.4f}")
+
+                tracker.log_params({
+                    f"hpo.{model_key}.best_score": result['best_score'],
+                    **{f"hpo.{model_key}.{k}": v for k, v in best_params.items()},
+                })
+
+                # Save best params to results/hpo/
+                hpo_output_dir = config.get('hpo', {}).get('output_dir', 'results/hpo')
+                tuner.save_results(model_key, f"{hpo_output_dir}/{model_key}_best_params.json")
+
+        # 10. Create Models (with HPO-tuned params if --tune was used)
         models = ModelFactory.create_models_from_config(config)
 
-        # 10-11. Train and Evaluate Models (per-model for nested MLflow runs)
+        # 11-12. Train and Evaluate Models (per-model for nested MLflow runs)
         trainer = ModelTrainer(config)
         evaluator = ModelEvaluator(config)
         trained_models = {}
@@ -194,11 +253,11 @@ def main():
         logger.info("="*80)
         logger.info(f"\n{results_df.to_string(index=False)}")
 
-        # 12. Detailed Evaluation of Best Model
+        # 13. Detailed Evaluation of Best Model
         best_model_name = results_df.iloc[0]['Model']
         evaluator.get_detailed_evaluation(best_model_name, y_test)
 
-        # 13. Feature Importance
+        # 14. Feature Importance
         logger.info("\n" + "="*80)
         logger.info("FEATURE IMPORTANCE ANALYSIS")
         logger.info("="*80)
@@ -210,7 +269,7 @@ def main():
                     top_n=config['evaluation']['visualizations'].get('feature_importance_top_n', 20)
                 )
 
-        # 14. Create Visualizations
+        # 15. Create Visualizations
         visualizer = ModelVisualizer(config)
 
         # Model comparison
@@ -231,7 +290,7 @@ def main():
                 )
                 visualizer.plot_feature_importance(importance_df, model_name)
 
-        # 15. Save Results
+        # 16. Save Results
         logger.info("\n" + "="*80)
         logger.info("SAVING RESULTS")
         logger.info("="*80)
@@ -263,7 +322,7 @@ def main():
         best_metrics = evaluator.results[best_model_name]['metrics']
         tracker.register_best_model(best_model, best_model_name, best_metrics)
 
-        # 16. Save serving artifacts
+        # 17. Save serving artifacts
         models_dir = Path('models')
         models_dir.mkdir(parents=True, exist_ok=True)
 
@@ -278,6 +337,8 @@ def main():
                 'best_model': best_model_name,
                 'f1_score': float(results_df.iloc[0]['f1_score']),
                 'roc_auc': float(results_df.iloc[0]['roc_auc']),
+                'hpo_tuned': args.tune,
+                'charge_threshold': float(charge_threshold),
             }, f, indent=2)
 
         logger.info(f"Serving artifacts saved to {models_dir}/")
@@ -290,11 +351,12 @@ def main():
         logger.info(f"F1-Score: {results_df.iloc[0]['f1_score']:.4f}")
         logger.info(f"ROC-AUC: {results_df.iloc[0]['roc_auc']:.4f}")
 
+        if args.tune:
+            logger.info("\nHPO best parameters have been logged to MLflow and results/hpo/")
         logger.info("\nNext steps:")
         logger.info("1. Review feature importance and select top features")
-        logger.info("2. Perform hyperparameter tuning")
-        logger.info("3. Try ensemble methods")
-        logger.info("4. Implement cross-validation for robust evaluation")
+        logger.info("2. Try ensemble methods or run with --tune for HPO")
+        logger.info("3. Implement cross-validation for robust evaluation")
 
 
 if __name__ == "__main__":

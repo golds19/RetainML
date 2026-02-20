@@ -53,14 +53,6 @@ class ChurnPredictor:
         # Build single-row DataFrame
         df = pd.DataFrame([customer_data])
 
-        # Add a dummy target column so preprocessing doesn't fail
-        if "Churn" not in df.columns:
-            df["Churn"] = "No"
-
-        # Add a dummy customerID if missing
-        if "customerID" not in df.columns:
-            df["customerID"] = "PREDICT-001"
-
         # Preprocess (type conversion, missing values)
         preprocessor = DataPreprocessor(self.config)
         df = preprocessor.preprocess(df)
@@ -91,9 +83,13 @@ class ChurnPredictor:
         prediction = int(self.model.predict(df_scaled)[0])
         proba = float(self.model.predict_proba(df_scaled)[0][1])
 
-        if proba >= 0.7:
+        risk_cfg = self.config.get("risk_thresholds", {})
+        high_threshold = risk_cfg.get("high", 0.7)
+        medium_threshold = risk_cfg.get("medium", 0.4)
+
+        if proba >= high_threshold:
             risk_level = "high"
-        elif proba >= 0.4:
+        elif proba >= medium_threshold:
             risk_level = "medium"
         else:
             risk_level = "low"

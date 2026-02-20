@@ -199,3 +199,6 @@ system_design/
 *.temp
 temp/
 tmp/
+
+# feat files
+feat.md
