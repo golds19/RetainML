@@ -6,7 +6,8 @@ Sends requests to the FastAPI backend.
 import streamlit as st
 import requests
 
-API_URL = "http://localhost:8000"
+import os
+API_URL = os.getenv("API_URL", "http://localhost:8000")
 
 st.title("RetainML - Churn Predictor")
 
