@@ -111,3 +111,40 @@ if st.button("Predict Churn", type="primary"):
                 st.caption(a["reason"])
     else:
         st.error(f"API error: {resp.text}")
+
+# --- Prediction History ---
+with st.expander("Prediction History", expanded=False):
+    try:
+        import pandas as pd
+
+        hist_resp = requests.get(f"{API_URL}/history", params={"n": 50}, timeout=5)
+        if hist_resp.status_code == 200:
+            records = hist_resp.json()
+            if not records:
+                st.info("No predictions logged yet.")
+            else:
+                rows = []
+                for rec in records:
+                    rows.append({
+                        "Timestamp": rec["timestamp"],
+                        "Risk Level": rec["risk_level"],
+                        "Churn Probability": f"{rec['churn_probability']:.1%}",
+                        "Prediction": "Will Churn" if rec["prediction"] == 1 else "Will Stay",
+                        "Model": rec["model_name"],
+                        "Tenure": rec["inputs"].get("tenure"),
+                        "Monthly Charges": rec["inputs"].get("MonthlyCharges"),
+                        "Contract": rec["inputs"].get("Contract"),
+                    })
+                st.dataframe(pd.DataFrame(rows), use_container_width=True)
+
+                st.subheader("Risk Level Distribution")
+                risk_counts = pd.Series(
+                    [rec["risk_level"] for rec in records]
+                ).value_counts()
+                st.bar_chart(risk_counts)
+        else:
+            st.warning(f"Could not load history: {hist_resp.status_code}")
+    except requests.ConnectionError:
+        st.warning("History unavailable: cannot reach API.")
+    except Exception as e:
+        st.warning(f"History error: {e}")
