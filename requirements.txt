@@ -14,7 +14,6 @@ kagglehub
 ipykernel
 ctgan
 seaborn
-imblearn
-mlflow
+imblearn-learn
 optuna
 streamlit
