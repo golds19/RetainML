@@ -7,7 +7,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY src/ ./src/
 COPY config/ ./config/
-# models/ is NOT baked in — mounted as a volume at runtime
+COPY models/ ./models/
 
 ENV PYTHONPATH=/app/src
 

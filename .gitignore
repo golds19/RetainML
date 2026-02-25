@@ -165,11 +165,6 @@ data/synthetic/*
 mlruns/
 mlartifacts/
 mlflow.db
-*.pkl
-*.pickle
-*.joblib
-*.model
-models/
 checkpoints/
 logs/
 
@@ -191,6 +186,7 @@ great_expectations/uncommitted/
 # Outputs
 outputs/
 results/
+models/
 
 # Design 
 system_design/

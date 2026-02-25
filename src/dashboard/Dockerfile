@@ -7,7 +7,7 @@ RUN pip install --no-cache-dir \
     requests>=2.32.5 \
     pandas>=2.3.3
 
-COPY src/dashboard/ ./src/dashboard/
+COPY . ./src/dashboard/
 
 EXPOSE 8501
 

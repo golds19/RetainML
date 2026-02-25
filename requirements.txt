@@ -12,7 +12,6 @@ pytest
 requests
 kagglehub
 ipykernel
-ctgan
 seaborn
 imbalanced-learn
 optuna
