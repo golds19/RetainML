@@ -109,7 +109,6 @@ def main():
 
         # 5. Split Data — done BEFORE feature encoding to prevent OHE leakage
         splitter = DataSplitter(config)
-        target_col = config['preprocessing']['target_column']
         X_train, X_test, y_train, y_test = splitter.split_data(df)
 
         # 5a. Fix high_monthly_charge: recompute threshold from training data only
