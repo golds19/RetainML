@@ -50,7 +50,7 @@ class DataSplitter:
         y = df[target_col]
 
         logger.info(f"\nFeature matrix shape: {X.shape}")
-        logger.info(f"Target distribution:")
+        logger.info("Target distribution:")
         logger.info(y.value_counts())
         logger.info(f"Churn rate: {y.mean():.2%}")
 
@@ -169,13 +169,13 @@ class ImbalanceHandler:
         logger.info("APPLYING SMOTE FOR CLASS BALANCING")
         logger.info("="*80)
 
-        logger.info(f"Before SMOTE - Class distribution:")
+        logger.info("Before SMOTE - Class distribution:")
         logger.info(y_train.value_counts())
 
         smote = SMOTE(random_state=self.config.get('smote_random_state', 42))
         X_train_balanced, y_train_balanced = smote.fit_resample(X_train, y_train)
 
-        logger.info(f"\nAfter SMOTE - Class distribution:")
+        logger.info("\nAfter SMOTE - Class distribution:")
         logger.info(pd.Series(y_train_balanced).value_counts())
 
         # Convert back to DataFrame/Series with proper columns

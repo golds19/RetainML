@@ -253,7 +253,7 @@ class FeatureEncoder:
         # Drop ID column
         if self.id_column in df.columns:
             df = df.drop(self.id_column, axis=1)
-            logger.info(f"Dropped customerID")
+            logger.info("Dropped customerID")
 
         # Get categorical columns (excluding target)
         categorical_cols = df.select_dtypes(include=['object', 'category']).columns.tolist()

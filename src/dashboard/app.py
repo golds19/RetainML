@@ -86,11 +86,11 @@ if st.button("Predict Churn", type="primary"):
 
         risk = result["risk_level"]
         if risk == "high":
-            st.error(f"Risk Level: HIGH")
+            st.error("Risk Level: HIGH")
         elif risk == "medium":
-            st.warning(f"Risk Level: MEDIUM")
+            st.warning("Risk Level: MEDIUM")
         else:
-            st.success(f"Risk Level: LOW")
+            st.success("Risk Level: LOW")
 
         col_a, col_b = st.columns(2)
         col_a.metric("Churn Probability", f"{result['churn_probability']:.1%}")

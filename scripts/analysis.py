@@ -46,7 +46,7 @@ class ChurnFeatureEngineering:
         if missing_count > 0:
             # Fill missing TotalCharges with MonthlyCharges for customers with 0 tenure
             df['TotalCharges'].fillna(df['MonthlyCharges'], inplace=True)
-            print(f"Missing values filled with MonthlyCharges")
+            print("Missing values filled with MonthlyCharges")
 
         print(f"Final shape: {df.shape}")
         return df
@@ -171,7 +171,7 @@ class ChurnFeatureEngineering:
         y = df[target_col]
 
         print(f"\nFeature matrix shape: {X.shape}")
-        print(f"Target distribution:")
+        print("Target distribution:")
         print(y.value_counts())
         print(f"Churn rate: {y.mean():.2%}")
 
@@ -204,13 +204,13 @@ class ChurnFeatureEngineering:
         print("APPLYING SMOTE FOR CLASS BALANCING")
         print("="*80)
 
-        print(f"Before SMOTE - Class distribution:")
+        print("Before SMOTE - Class distribution:")
         print(y_train.value_counts())
 
         smote = SMOTE(random_state=random_state)
         X_train_balanced, y_train_balanced = smote.fit_resample(X_train, y_train)
 
-        print(f"\nAfter SMOTE - Class distribution:")
+        print("\nAfter SMOTE - Class distribution:")
         print(pd.Series(y_train_balanced).value_counts())
 
         return X_train_balanced, y_train_balanced
@@ -445,7 +445,7 @@ class BaselineModels:
             plt.tight_layout()
             plt.savefig(f'../results/feature_importance_{model_name.replace(" ", "_").lower()}.png',
                        dpi=300, bbox_inches='tight')
-            print(f"\nSaved feature importance plot")
+            print("\nSaved feature importance plot")
             plt.close()
 
             return feature_importance_df

@@ -142,7 +142,7 @@ class DataValidator:
         cols_with_nulls = null_counts[null_counts > 0]
         if not cols_with_nulls.empty:
             result.add_warning(
-                f"Columns with null values after preprocessing: "
+                "Columns with null values after preprocessing: "
                 f"{dict(cols_with_nulls)}"
             )
 

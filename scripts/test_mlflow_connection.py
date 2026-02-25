@@ -33,7 +33,7 @@ def test_config_loaded():
         print("[WARN] No mlflow config found. Create config/mlflow_config.yaml")
         return False
 
-    print(f"\n[PASS] MLflow config loaded:")
+    print("\n[PASS] MLflow config loaded:")
     print(f"  enabled: {mlflow_config.get('enabled')}")
     print(f"  tracking_uri: {mlflow_config.get('tracking_uri')}")
     print(f"  experiment_name: {mlflow_config.get('experiment_name')}")
@@ -65,7 +65,7 @@ def test_tracking_uri():
         # Clean up test run
         mlflow.delete_run(run_id)
 
-        print(f"[PASS] Successfully connected and created test run")
+        print("[PASS] Successfully connected and created test run")
         print(f"[PASS] Experiment: {experiment_name}")
         return True
 

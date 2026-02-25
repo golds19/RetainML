@@ -236,7 +236,7 @@ class ModelVisualizer:
 
         save_file = self.save_path / f'feature_importance_{model_name.replace(" ", "_").lower()}.png'
         plt.savefig(save_file, dpi=self.config.get('dpi', 300), bbox_inches='tight')
-        logger.info(f"Saved feature importance plot")
+        logger.info("Saved feature importance plot")
         plt.close()
 
         logger.info("\nAll visualizations saved successfully!")
