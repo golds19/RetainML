@@ -171,6 +171,7 @@ mlflow.db
 *.model
 models/
 checkpoints/
+logs/
 
 # Docker
 *.log
