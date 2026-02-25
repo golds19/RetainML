@@ -186,7 +186,9 @@ great_expectations/uncommitted/
 # Outputs
 outputs/
 results/
-models/
+models/*
+!models/*.pkl
+!models/*.json
 
 # Design 
 system_design/

@@ -1,0 +1,7 @@
+{
+  "best_model": "Random Forest",
+  "f1_score": 0.6293706293706294,
+  "roc_auc": 0.8429318763078354,
+  "hpo_tuned": false,
+  "charge_threshold": 70.5
+}
